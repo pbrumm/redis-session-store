@@ -193,6 +193,28 @@ describe RedisSessionStore do
         end
       end
     end
+
+    context 'when redis is down but reconnect works' do
+
+      before do
+        redis = store.send(:redis)
+        allow(store).to receive(:redis).once.and_raise(Redis::CannotConnectError)
+        allow(store).to receive(:redis).once.and_return(redis)
+
+        store.on_redis_down = ->(*_a) { @redis_down_handled = true }
+      end
+
+      it 'returns true' do
+        expect(store.send(:set_session, env, session_id, session_data, options))
+          .to eq(12345)
+      end
+
+      it 'doesnt calls the on_redis_down handler' do
+        store.send(:set_session, env, session_id, session_data, options)
+        expect(@redis_down_handled).to eq(nil)
+      end
+
+    end
   end
 
   describe 'checking for session existence' do
@@ -246,6 +268,20 @@ describe RedisSessionStore do
           allow(store).to receive(:redis).and_raise(Redis::CannotConnectError)
           expect(store.send(:session_exists?, :env)).to eq(true)
         end
+        it 'returns true (fallback to old behavior) reconnect' do
+          allow(store).to receive(:redis).and_raise(Redis::CannotConnectError)
+          expect(store.send(:session_exists?, :env)).to eq(true)
+        end
+      end
+
+      context 'when redis is down and reconnect successful' do
+        it 'returns false' do
+          allow(store).to receive(:redis).once.and_raise(Redis::CannotConnectError)
+          allow(store).to receive(:redis).once.and_return(redis)
+          expect(redis).to receive(:exists).with('foo').and_return(true)
+          expect(store.send(:session_exists?, :env)).to eq(true)
+        end
+
       end
     end
   end
