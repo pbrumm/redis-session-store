@@ -47,6 +47,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
 
     @default_options.merge!(namespace: 'rack:session')
     @default_options.merge!(redis_options)
+    @default_options.merge!(redis: redis_options)
     initialize_redis_connection
     @on_redis_down = options[:on_redis_down]
     @serializer = determine_serializer(options[:serializer])
@@ -63,7 +64,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
   def initialize_redis_connection
     @connection_mutex.synchronize {
       if @last_reconnect.nil? || @last_reconnect < Time.now - 1
-        @redis = @default_options[:client] || Redis.new(@default_options)
+        @redis = @default_options[:client] || Redis.new(@default_options[:redis])
         @last_reconnect = Time.now
       end
     }
