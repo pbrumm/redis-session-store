@@ -143,10 +143,8 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
     begin
       yield
     rescue Redis::CommandError => e
-      if e.include?("READONLY")
-        initialize_redis_connection
-        yield
-      end
+      initialize_redis_connection
+      yield
     rescue Errno::ECONNREFUSED, Redis::CannotConnectError => e
       initialize_redis_connection
       yield
