@@ -126,6 +126,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
     on_redis_down.call(e, env, sid) if on_redis_down
     [generate_sid, {}]
   end
+  alias find_session get_session
 
   def load_session_from_redis(sid)
     data = nil
@@ -170,6 +171,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
     on_redis_down.call(e, env, sid) if on_redis_down
     return false
   end
+  alias write_session set_session
 
   def encode(session_data)
     serializer.dump(session_data)
@@ -178,6 +180,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
   def destroy_session(env, sid, options)
     destroy_session_from_sid(sid, (options || {}).to_hash.merge(env: env))
   end
+  alias delete_session destroy_session
 
   def destroy(env)
     if env['rack.request.cookie_hash'] &&
