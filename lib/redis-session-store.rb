@@ -7,8 +7,13 @@ require 'thread'
 class RedisSessionStore < ActionDispatch::Session::AbstractStore
   VERSION = '0.8.0'
   # Rails 3.1 and beyond defines the constant elsewhere
-  ENV_SESSION_OPTIONS_KEY = Rack::Session::Abstract::ENV_SESSION_OPTIONS_KEY \
-    unless defined?(ENV_SESSION_OPTIONS_KEY)
+  unless defined?(ENV_SESSION_OPTIONS_KEY)
+    if Rack.release.split('.').first.to_i > 1
+      ENV_SESSION_OPTIONS_KEY = Rack::RACK_SESSION_OPTIONS
+    else
+      ENV_SESSION_OPTIONS_KEY = Rack::Session::Abstract::ENV_SESSION_OPTIONS_KEY
+    end
+  end
 
 
   # ==== Options
@@ -105,7 +110,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
   end
 
   def get_session(env, sid)
-    if sid 
+    if sid
       session = nil
       retry_and_reconnect_if_not_master do
         session = load_session_from_redis(sid)
@@ -158,7 +163,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
       else
         redis.set(prefixed(sid), encode(session_data))
       end
-      
+
     end
     return sid
   rescue Errno::ECONNREFUSED, Redis::CannotConnectError => e
