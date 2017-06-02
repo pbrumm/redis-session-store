@@ -80,7 +80,6 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
   # other reason, and session was accessed only for reading.
   def session_exists?(env)
     value = current_session_id(env)
-    binding.pry
     if value && !value.empty?
       response = nil
       retry_and_reconnect_if_not_master do
@@ -110,7 +109,6 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
   end
 
   def get_session(env, sid)
-    binding.pry
     if sid
       session = nil
       retry_and_reconnect_if_not_master do
@@ -119,7 +117,7 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
     else
       sid = generate_sid
     end
-    
+
     if session.nil?
       sid = generate_sid
       session = {}
@@ -162,7 +160,6 @@ class RedisSessionStore < ActionDispatch::Session::AbstractStore
     end
   end
   def set_session(env, sid, session_data, options = nil) # rubocop: disable MethodLength, LineLength
-    binding.pry
     expiry = (options || env.fetch(ENV_SESSION_OPTIONS_KEY))[:expire_after]
     retry_and_reconnect_if_not_master do
       if expiry
